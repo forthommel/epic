@@ -163,21 +163,7 @@ namespace EPIC {
       size_t it_chisq = 0;
       double result = 0., abserr = 0.;
       do {  // main integration run
-        if (int res = gsl_monte_vegas_integrate(&m_function,
-                                                &m_lowx[0],
-                                                &m_highx[0],
-                                                m_kinematicRanges.size(),
-                                                m_num_function_calls / m_max_iterations,
-                                                m_rnd_gen,
-                                                m_vegas_state.get(),
-                                                &result,
-                                                &abserr);
-            res != GSL_SUCCESS)
-          throw ElemUtils::CustomException(
-              getClassName(),
-              __func__,
-              ElemUtils::Formatter() << "Error at iteration #" << it_chisq
-                                     << " while performing the integration. GSL error: " << gsl_strerror(res) << ".");
+        iterate(m_num_function_calls / m_max_iterations, result, abserr);
         ++it_chisq;
         info(__func__,
              ElemUtils::Formatter() << "Iteration #" << it_chisq << ": average=" << result << ", sigma=" << abserr
@@ -189,24 +175,28 @@ namespace EPIC {
 
   void EventGeneratorVegas::warmup() {
     double result = 0., abserr = 0.;
+    iterate(m_num_warmup_calls, result, abserr);
+    info(__func__,
+         ElemUtils::Formatter() << "Vegas finished warmup with " << m_num_warmup_calls
+                                << " calls. Initial value of the integral: " << result << " +/- " << abserr << ".");
+    m_integral = std::make_pair(result, abserr);
+  }
+
+  void EventGeneratorVegas::iterate(size_t num_calls, double &result, double &abserr) {
     if (int res = gsl_monte_vegas_integrate(&m_function,
                                             &m_lowx[0],
                                             &m_highx[0],
                                             m_kinematicRanges.size(),
-                                            m_num_warmup_calls,
+                                            num_calls,
                                             m_rnd_gen,
                                             m_vegas_state.get(),
                                             &result,
                                             &abserr);
         res != GSL_SUCCESS)
-      throw ElemUtils::CustomException(
-          getClassName(),
-          __func__,
-          ElemUtils::Formatter() << "Failed to warm-up the Vegas grid. GSL error: " << gsl_strerror(res) << ".");
-    info(__func__,
-         ElemUtils::Formatter() << "Vegas finished warmup with " << m_num_warmup_calls
-                                << " calls. Initial value of the integral: " << result << " +/- " << abserr << ".");
-    m_integral = std::make_pair(result, abserr);
+      throw ElemUtils::CustomException(getClassName(),
+                                       __func__,
+                                       ElemUtils::Formatter() << "Failed to iterate with " << num_calls
+                                                              << " calls. GSL error: " << gsl_strerror(res) << ".");
   }
 
   double EventGeneratorVegas::integrand(double *x, size_t dim, void *params) {

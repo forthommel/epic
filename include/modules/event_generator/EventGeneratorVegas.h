@@ -52,6 +52,7 @@ namespace EPIC {
   private:
     static double integrand(double *, size_t, void *);
     void warmup();
+    void iterate(size_t, double &, double &);
 
     gsl_rng *m_rnd_gen{nullptr};
     gsl_monte_vegas_params m_vegas_params;
@@ -67,8 +68,8 @@ namespace EPIC {
     static EventGeneratorInterface *m_pEventGeneratorInterface;
     std::vector<KinematicRange> m_kinematicRanges;  ///< Kinematic ranges set during initialization.
 
-    size_t m_num_function_calls{100'000};
-    size_t m_num_warmup_calls{25'000};
+    size_t m_num_function_calls{50'000};
+    size_t m_num_warmup_calls{5'000};
     size_t m_max_iterations{10};  ///< Number of iterations in standard run
     double m_chisq_cut{1.5};
     double m_alpha{1.25};
