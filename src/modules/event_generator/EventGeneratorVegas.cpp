@@ -42,7 +42,7 @@ namespace EPIC {
 
     m_num_function_calls = other.m_num_function_calls;
     m_num_warmup_calls = other.m_num_warmup_calls;
-    m_iterations = other.m_iterations;
+    m_max_iterations = other.m_max_iterations;
     m_chisq_cut = other.m_chisq_cut;
     m_alpha = other.m_alpha;
     m_verbosity = other.m_verbosity;
@@ -75,10 +75,10 @@ namespace EPIC {
     }
 
     if (parameters.isAvailable(EventGeneratorVegas::PARAMETER_NAME_ITERATIONS)) {
-      m_iterations = parameters.getLastAvailable().toUInt();
+      m_max_iterations = parameters.getLastAvailable().toUInt();
       info(__func__,
            ElemUtils::Formatter() << "Parameter " << EventGeneratorVegas::PARAMETER_NAME_ITERATIONS << " changed to "
-                                  << m_iterations);
+                                  << m_max_iterations);
     }
 
     if (parameters.isAvailable(EventGeneratorVegas::PARAMETER_NAME_CHISQ_CUT)) {
@@ -133,7 +133,7 @@ namespace EPIC {
       // integrator parameters
       m_vegas_state.reset(gsl_monte_vegas_alloc(m_kinematicRanges.size()));
       gsl_monte_vegas_params_get(m_vegas_state.get(), &m_vegas_params);
-      m_vegas_params.iterations = m_iterations;
+      m_vegas_params.iterations = m_max_iterations;
       m_vegas_params.alpha = m_alpha;
       m_vegas_params.verbose = m_verbosity;
       m_vegas_params.mode = m_mode;
@@ -167,7 +167,7 @@ namespace EPIC {
                                                 &m_lowx[0],
                                                 &m_highx[0],
                                                 m_kinematicRanges.size(),
-                                                m_num_function_calls,
+                                                m_num_function_calls / m_max_iterations,
                                                 m_rnd_gen,
                                                 m_vegas_state.get(),
                                                 &result,
@@ -181,8 +181,7 @@ namespace EPIC {
         ++it_chisq;
         info(__func__,
              ElemUtils::Formatter() << "Iteration #" << it_chisq << ": average=" << result << ", sigma=" << abserr
-                                    << ", chi2=" << gsl_monte_vegas_chisq(m_vegas_state.get()));
-
+                                    << ", chi2=" << gsl_monte_vegas_chisq(m_vegas_state.get()) << ".");
       } while (std::fabs(gsl_monte_vegas_chisq(m_vegas_state.get()) - 1.) > m_chisq_cut - 1.);
       m_integral = std::make_pair(result, abserr);
     }
@@ -204,6 +203,10 @@ namespace EPIC {
           getClassName(),
           __func__,
           ElemUtils::Formatter() << "Failed to warm-up the Vegas grid. GSL error: " << gsl_strerror(res) << ".");
+    info(__func__,
+         ElemUtils::Formatter() << "Vegas finished warmup with " << m_num_warmup_calls
+                                << " calls. Initial value of the integral: " << result << " +/- " << abserr << ".");
+    m_integral = std::make_pair(result, abserr);
   }
 
   double EventGeneratorVegas::integrand(double *x, size_t dim, void *params) {

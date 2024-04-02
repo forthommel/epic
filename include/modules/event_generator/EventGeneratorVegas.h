@@ -30,7 +30,7 @@ namespace EPIC {
   public:
     static const std::string PARAMETER_NAME_NUM_FCT_CALLS;  ///< Key to set EventGeneratorVegas::m_num_function_calls.
     static const std::string PARAMETER_NAME_WARMUP_CALLS;   ///< Key to set EventGeneratorVegas::m_num_warmup_calls.
-    static const std::string PARAMETER_NAME_ITERATIONS;     ///< Key to set EventGeneratorVegas::m_iterations.
+    static const std::string PARAMETER_NAME_ITERATIONS;     ///< Key to set EventGeneratorVegas::m_max_iterations.
     static const std::string PARAMETER_NAME_CHISQ_CUT;      ///< Key to set EventGeneratorVegas::m_chisq_cut.
     static const std::string PARAMETER_NAME_ALPHA;          ///< Key to set EventGeneratorVegas::m_alpha.
     static const std::string PARAMETER_NAME_VERBOSITY;      ///< Key to set EventGeneratorVegas::m_verbosity.
@@ -69,7 +69,7 @@ namespace EPIC {
 
     size_t m_num_function_calls{100'000};
     size_t m_num_warmup_calls{25'000};
-    size_t m_iterations{10};  ///< Number of iterations in standard run
+    size_t m_max_iterations{10};  ///< Number of iterations in standard run
     double m_chisq_cut{1.5};
     double m_alpha{1.25};
     int m_verbosity{-1};
